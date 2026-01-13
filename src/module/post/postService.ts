@@ -15,67 +15,124 @@ const createPostService = async (
   return result;
 };
 
-const getPostService = async ({search,tags,isFeatured, status,
-    authorId}: { search: string | undefined ,tags:string[]|[],isFeatured:boolean|undefined,
-        status: PostStatus | undefined,
-    authorId: string | undefined
-    }) => {
-    const andCondition:PostWhereInput[]=[]
-      if ( search) {     
-          andCondition.push({
- OR: [
-            {
-              title: {
-                contains: search,
-                mode: "insensitive",
-              },
-            },
-            {
-              content: {
-                contains: search ,
-                mode: "insensitive",
-              },
-            },
-            {
-              tags: {
-                has: search ,
-              },
-            },
-          ]
-
-          })  
-      }
-      if (tags.length > 0) {
-        andCondition.push({
-            tags: {
-                hasEvery: tags as string[]
-            }
-        })
-    }
-        if (typeof isFeatured === 'boolean') {
-        andCondition.push({
-            isFeatured
-        })
-         if (status) {
-        andCondition.push({
-            status
-        })
+const getPostService = async ({
+  search,
+  tags,
+  isFeatured,
+  status,
+  page,
+  limit,
+  skip,
+  sortBy,
+  sortOrder,
+  authorId,
+}: {
+  search: string | undefined;
+  tags: string[] | [];
+  isFeatured: boolean | undefined;
+  status: PostStatus | undefined;
+  authorId: string | undefined;
+  page: number;
+  limit: number;
+  skip: number;
+  sortBy: string;
+  sortOrder: string | undefined;
+}) => {
+  const andCondition: PostWhereInput[] = [];
+  if (search) {
+    andCondition.push({
+      OR: [
+        {
+          title: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
+          content: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
+          tags: {
+            has: search,
+          },
+        },
+      ],
+    });
+  }
+  if (tags.length > 0) {
+    andCondition.push({
+      tags: {
+        hasEvery: tags as string[],
+      },
+    });
+  }
+  if (typeof isFeatured === "boolean") {
+    andCondition.push({
+      isFeatured,
+    });
+    if (status) {
+      andCondition.push({
+        status,
+      });
     }
 
     if (authorId) {
-        andCondition.push({
-            authorId
-        })
+      andCondition.push({
+        authorId,
+      });
     }
-    }
+  }
   const allPost = await prisma.post.findMany({
-     where:{
-      AND:
-         andCondition
-
-     }
+    take: limit,
+    skip,
+    where: {
+      AND: andCondition,
+    },
+    orderBy: {
+      [sortBy]: sortOrder,
+    },
   });
+  const total = await prisma.post.count({
+        where: {
+            AND: andCondition
+        }
+    })
+  return {
+    data:allPost,
+    pagination:{
+         total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        }
+    }
+  };
+ 
+  const getPostById = async (postId: string) => {
+    return await prisma.$transaction(async (tx) => {
+        await tx.post.update({
+            where: {
+                id: postId
+            },
+            data: {
+                views: {
+                    increment: 1
+                }
+            }
+        })
+        const postData = await tx.post.findUnique({
+            where: {
+                id: postId
+            }
+        })
+        return postData
+    })
+}
+ 
+ 
+   
 
-  return allPost;
-};
-export const PostService = { createPostService, getPostService };
+export const PostService = { createPostService, getPostService,getPostById };

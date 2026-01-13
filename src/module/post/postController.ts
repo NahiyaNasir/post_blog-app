@@ -1,6 +1,7 @@
 import { Request, Response } from "express"
 import { PostService } from "./postService";
 import { PostStatus } from "../../../generated/prisma/enums";
+import paginationSortingHelper from "../../helpers/paginationHelperfun";
 
 
 
@@ -34,19 +35,35 @@ const createPostController= async (req:Request,res:Response)=>{
          ? false :undefined
          :undefined
            const status = req.query.status as PostStatus | undefined
-
         const authorId = req.query.authorId as string | undefined
-    const result= await  PostService.getPostService({search:searchType,tags,isFeatured,status,authorId})
-     console.log(result);
+             const { page, limit, skip, sortBy, sortOrder } = paginationSortingHelper(req.query)
+
+    const result= await  PostService.getPostService({search:searchType,tags,isFeatured,status,authorId,page,limit,skip,sortBy,sortOrder})
+   //   console.log(result);
      res.status(200).json(
         result
      )
-  } catch (error) {
+  } catch (e) {
     res.status(400).json({
         error:'post  get fail',
-        details:error
+        details:e
     })
   }
  }
+  const getPostByIdCon= async(req:Request,res:Response)=>{
+    try {
+       const {postId}= req.params
+       const result = await  PostService.getPostById(postId as string)
+       res.status(200).json(
+        result
+     )
+       return result
+    } catch (e) {
+       res.status(400).json({
+        error:'post  get fail',
+        details:e
+    })
+    }
+  }
  export  const postController={ createPostController,
-  getAllPostController}
+  getAllPostController, getPostByIdCon}
