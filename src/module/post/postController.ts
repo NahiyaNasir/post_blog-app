@@ -53,7 +53,12 @@ const createPostController= async (req:Request,res:Response)=>{
   const getPostByIdCon= async(req:Request,res:Response)=>{
     try {
        const {postId}= req.params
-       const result = await  PostService.getPostById(postId as string)
+       if ( !postId){
+         throw new Error (' post id requried')
+       } {
+         
+       }
+       const result = await  PostService.getPostById(postId )
        res.status(200).json(
         result
      )
