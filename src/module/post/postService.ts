@@ -118,7 +118,7 @@ const getPostService = async ({
  
   const getPostById = async (postId: string) => {
     return await prisma.$transaction(async (tx) => {
-        await tx.post.update({
+        await tx.post.updateMany({
             where: {
                 id: postId
             },
@@ -167,12 +167,39 @@ const getPostService = async ({
 
             
         })
-        console.log(postData);
+        // console.log(postData);
         return postData
     })
 }
+ const getMyPosts=async(authorId:string)=>{
+   await prisma.user.findUniqueOrThrow({
+        where: {
+            id: authorId,
+            status: "ACTIVE"
+        },
+        select: {
+            id: true
+        }
+    })
+     const result = await prisma.post.findMany({
+        where: {
+            authorId
+        },
+        orderBy: {
+            createdAt: "desc"
+        },
+        include: {
+            _count: {
+                select: {
+                    comments: true
+                }
+            }
+        }
+    });
+    return  result
+ }
  
  
    
 
-export const PostService = { createPostService, getPostService,getPostById };
+export const PostService = { createPostService, getPostService,getPostById,getMyPosts };
