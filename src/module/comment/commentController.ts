@@ -1,11 +1,8 @@
-import { Request, Response } from "express"
+import { NextFunction, Request, Response } from "express"
 import { CommentService } from "./commentService";
-const createCommentController= async (req:Request,res:Response)=>{
+const createCommentController= async (req:Request,res:Response,next:NextFunction)=>{
   try {
         const user = req.user;
-         // console.log(
-         //    user
-         // );
         req.body.authorId= user?.id;
      
     const result= await CommentService.createComment (req.body)
@@ -14,15 +11,12 @@ const createCommentController= async (req:Request,res:Response)=>{
         result
      )
   } catch (e) {
-   console.log(e);
-    res.status(400).json({
-        error:' comment creation fail',
-        details:e
-    })
+  
+   next(e)
     
   }
 }
-  const commentById= async(req:Request,res:Response)=>{
+  const commentById= async(req:Request,res:Response,next:NextFunction)=>{
      try {
          const {commentId}= req.params
          const result= await  CommentService.getCommentById(commentId as string)
@@ -30,13 +24,10 @@ const createCommentController= async (req:Request,res:Response)=>{
         result
      )
      } catch (error) {
-         res.status(400).json({
-        error:' comment create fail',
-        details:error
-    })
+        next(error)
      }
   }
-  const commentByAuthorId= async(req:Request,res:Response)=>{
+  const commentByAuthorId= async(req:Request,res:Response,next:NextFunction)=>{
      try {
          const {authorId}= req.params
          const result= await  CommentService.getCommentByAuthorId(authorId as string)
@@ -44,13 +35,10 @@ const createCommentController= async (req:Request,res:Response)=>{
         result
      )
      } catch (error) {
-         res.status(400).json({
-        error:' comment create fail',
-        details:error
-    })
+        next(error)
      }
   }
-    const commentDelete=async(req:Request,res:Response)=>{
+    const commentDelete=async(req:Request,res:Response,next:NextFunction)=>{
       try {
                  const user = req.user;
            const {commentId}= req.params
@@ -58,38 +46,28 @@ const createCommentController= async (req:Request,res:Response)=>{
   commentId as string)
               res.status(201).json(
         result )
-      } catch (e) {
-         console.log(e);
-          res.status(400).json({
-        error:' comment delate fail',
-        details:e
-          }
-    )}}
-    const updateComment = async (req: Request, res: Response) => {
+      }
+       catch (e) {
+         next(e)
+    }}
+    const updateComment = async (req: Request, res: Response,next:NextFunction) => {
     try {
         const user = req.user;
         const { commentId } = req.params;
         const result = await CommentService.updateComment(commentId as string, req.body, user?.id as string)
         res.status(200).json(result)
     } catch (e) {
-        console.log(e)
-        res.status(400).json({
-            error: "Comment update failed!",
-            details: e
-        })
+       next(e)
+       
     }
 }
-   const moderateCommentAdmin=async(req:Request,res:Response)=>{
+   const moderateCommentAdmin=async(req:Request,res:Response,next:NextFunction)=>{
     try {
            const { commentId } = req.params;
         const result= await CommentService.moderateComment(commentId as string,req.body)
          res.status(200).json(result)
     } catch (error) {
-          const errorMessage = (error instanceof Error) ? error.message : "Comment update failed!"
-          res.status(400).json({
-            error: errorMessage,
-            details: error
-        })
+         next(error)
     }
     }
    

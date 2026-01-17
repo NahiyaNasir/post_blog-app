@@ -1,12 +1,13 @@
-import { Request, Response } from "express"
+import { NextFunction, Request, Response } from "express"
 import { PostService } from "./postService";
 import { PostStatus } from "../../../generated/prisma/enums";
-import paginationSortingHelper from "../../helpers/paginationHelperfun";
+
 import { UserRole } from "../../middleware/middleware";
+import paginationSortingHelper from "../../helpers/paginationHelperfun";
 
 
 
-const createPostController= async (req:Request,res:Response)=>{
+const createPostController= async (req:Request,res:Response,next:NextFunction)=>{
   try {
 
      const user = req.user;
@@ -21,13 +22,10 @@ const createPostController= async (req:Request,res:Response)=>{
         result
      )
   } catch (error) {
-    res.status(400).json({
-        error:'post create fail',
-        details:error
-    })
+    next(error)
   }
 }
- const getAllPostController= async (req:Request,res:Response)=>{
+ const getAllPostController= async (req:Request,res:Response,next:NextFunction)=>{
     try {
        const {search} = req.query
        const searchType=   typeof search === 'string' ?search :undefined
@@ -45,13 +43,10 @@ const createPostController= async (req:Request,res:Response)=>{
         result
      )
   } catch (e) {
-    res.status(400).json({
-        error:'post  get fail',
-        details:e
-    })
+   next(e)
   }
  }
-  const getPostByIdCon= async(req:Request,res:Response)=>{
+  const getPostByIdCon= async(req:Request,res:Response,next:NextFunction)=>{
     try {
        const {postId}= req.params
        if ( !postId){
@@ -65,13 +60,10 @@ const createPostController= async (req:Request,res:Response)=>{
      )
        return result
     } catch (e) {
-       res.status(400).json({
-        error:'post  get fail',
-        details:e
-    })
+       next(e)
     }
   }
-  const getMyPostsCon = async (req: Request, res: Response) => {
+  const getMyPostsCon = async (req: Request, res: Response,next:NextFunction) => {
     try {
         const user = req.user;
         if (!user) {
@@ -82,13 +74,10 @@ const createPostController= async (req:Request,res:Response)=>{
         res.status(200).json(result)
     } catch (error) {
         console.log(error)
-        res.status(400).json({
-            error: "Post fetched failed",
-            details: error
-        })
+       next()
     }
 }
-  const updatePostCon = async (req: Request, res: Response) => {
+  const updatePostCon = async (req: Request, res: Response,next:NextFunction) => {
     try {
         const user = req.user;
         if (!user) {
@@ -99,14 +88,10 @@ const createPostController= async (req:Request,res:Response)=>{
         const result = await PostService.updatePost(postId as string,req.body, user.id ,isAdmin );
         res.status(200).json(result)
     } catch (error) {
-        const errorMessage = (error instanceof Error) ? error.message : "Post update failed!"
-        res.status(400).json({
-            error: errorMessage,
-            details: error
-        })
+      next(error)
     }
 }
-  const deletePostCon = async (req: Request, res: Response) => {
+  const deletePostCon = async (req: Request, res: Response,next:NextFunction) => {
     try {
         const user = req.user;
         if (!user) {
@@ -118,14 +103,10 @@ const createPostController= async (req:Request,res:Response)=>{
         res.status(200).json(result)
        
     } catch (error) {
-        const errorMessage = (error instanceof Error) ? error.message : "Post delete failed!"
-        res.status(400).json({
-            error: errorMessage,
-            details: error
-        })
+       next(error)
     }
 }
-  const statesPostCon = async (req: Request, res: Response) => {
+  const statesPostCon = async (req: Request, res: Response,next:NextFunction) => {
     try {
         const user = req.user;
         if (!user) {
@@ -136,11 +117,8 @@ const createPostController= async (req:Request,res:Response)=>{
         const result = await PostService.getStats();
         res.status(200).json(result)
     } catch (error) {
-        const errorMessage = (error instanceof Error) ? error.message : "states fetched failed!"
-        res.status(400).json({
-            error: errorMessage,
-            details: error
-        })
+        next(error)
+       
     }
 }
 
